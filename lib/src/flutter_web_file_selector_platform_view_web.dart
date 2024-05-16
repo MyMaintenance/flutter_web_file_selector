@@ -1,3 +1,4 @@
+import 'dart:html' as html;
 import 'dart:js_interop' as js;
 import 'dart:js_interop_unsafe';
 import 'dart:ui_web' as ui_web;
@@ -221,6 +222,57 @@ class WebFileSelectorPlatformView {
           });
 
           labelElement.append(inputElement);
+
+          if (onData != null) {
+            // The onChange or onInput event does not detect if "cancel" was click on file input
+            // This is a workaround in which to detect if it is canceled
+            // This required adding the following to the index.html
+
+            // <--- Add the js below to the index.html --->
+            // document.body.onfocus = function() {
+            //   var x = document.getElementById('flutter_web_file_selector_dialog_is_opened');
+            //   if (x && x.getAttribute('data-value') === 'true') {
+            //     x.setAttribute('data-value', 'false');
+            //   }
+            // };
+            // <--- Add the js above to the index.html --->
+
+            // Create a div that will
+            final divElement = web.HTMLDivElement();
+            divElement.id = 'flutter_web_file_selector_dialog_is_opened';
+            divElement.setAttribute('data-value', 'false');
+            web.document.body?.append(divElement);
+
+            inputElement.onClick.listen((event) {
+              divElement.setAttribute('data-value', 'true');
+            });
+
+            // Define the callback function for the MutationObserver
+            void mutationCallback(
+              List<dynamic> mutations,
+              html.MutationObserver observer,
+            ) {
+              for (var mutation in mutations) {
+                if (mutation.attributeName == 'data-value') {
+                  final value = (mutation.target as web.HTMLElement)
+                      .getAttribute('data-value');
+
+                  if (value == 'false' && inputElement.files?.length == 0) {
+                    // i.e. - The file selection dialog is closed and cancel button is clicked
+                    onData!([]);
+                  }
+                }
+              }
+            }
+
+            final observer = html.MutationObserver(mutationCallback);
+            observer.observe(
+              divElement as html.Node,
+              childList: true,
+              subtree: true,
+              attributes: true,
+            );
+          }
         }
 
         return labelElement;
