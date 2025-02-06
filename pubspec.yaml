@@ -5,13 +5,13 @@ homepage: https://github.com/koichia/flutter_web_file_selector
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
-  flutter: ">=3.19.0"
+  flutter: ">=3.27.4"
 
 dependencies:
   flutter:
     sdk: flutter
 
-  web: ^0.5.0
+  web: ^1.0.0
   cross_file: ^0.3.4
 
 dev_dependencies:
